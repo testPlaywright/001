@@ -1,3 +1,4 @@
+
 name: Cypress E2E Test Run
 
 on:
@@ -78,12 +79,15 @@ jobs:
           skipped=$(echo $stats | jq '.skipped')
           total=$((passed + failed + pending + skipped))
 
+
           echo "### ✅ Cypress Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- Total Test Cases: **$total**" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Passed: **$passed**" >> $GITHUB_STEP_SUMMARY
-          echo "- ❌ Failed: **$failed**" >> $GITHUB_STEP_SUMMARY
-          echo "- ⏸️ Pending: **$pending**" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔕 Skipped: **$skipped**" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Total Test Cases | $total |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Passed | $passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| ❌ Failed | $failed |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⏸️ Pending | $pending |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔕 Skipped | $skipped |" >> $GITHUB_STEP_SUMMARY
 
       - name: Deploy to the object storage bucket
         if: always()
