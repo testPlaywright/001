@@ -1,0 +1,72 @@
+
+Page Object Model (POM) – Validations and Best Practices
+
+✅ What to Include in a POM:
+---------------------------------
+1. Element Locators
+   - getUsernameField(), getLoginButton()
+
+2. UI Actions (Behaviors)
+   - login(username, password), fillForm(data)
+
+3. Navigations
+   - visitLoginPage(), goToDashboard()
+
+4. UI State Helpers
+   - isPageLoaded(), isButtonEnabled()
+
+5. Utility Wrappers
+   - selectDropdown(value), clickIfVisible(selector)
+
+6. Reusable UI Checks (optional)
+   - validateToastMessage(), validateFormError()
+
+7. Composed Actions
+   - submitLoginAndNavigate()
+
+
+🚫 What to Avoid in a POM:
+----------------------------
+- Business rule validations
+- Hardcoded test data
+- Assertions tied to test-specific expectations
+- Test logic or complex test scenarios
+
+
+✅ Types of Validations and Assertions (Used in Tests or Lightly in POM):
+-------------------------------------------------------------------------
+1. Visibility & Existence: cy.get().should('be.visible')
+2. Text Match: should('have.text'), should('contain')
+3. Attribute Match: should('have.attr', ...)
+4. State Validations: should('be.enabled'), should('be.disabled')
+5. Count Validations: should('have.length', n)
+6. URL/Route Check: cy.url().should('include', '/dashboard')
+7. CSS Style Check: should('have.css', ...)
+8. Form Field Value: should('have.value', ...)
+9. API Response Assertion: cy.request().its('status').should('eq', 200)
+
+✅ When Validations in POM are OK:
+----------------------------------
+- Page load readiness: isPageLoaded(), isDialogVisible()
+- Element availability: getButton().should('be.visible')
+- Shared utility checks: validateToast(message)
+
+🚫 When It Violates Best Practice:
+----------------------------------
+- Asserting test outcome values inside POM
+- Hardcoding test conditions in reusable functions
+- Creating one-off checks for individual tests
+
+✅ Real Example You Shared:
+----------------------------
+✔ You used:
+cy.get('div.MuiBox-root.css-199psgf').should('be.visible')
+inside a reusable method (fillDetails)
+
+➡ This is a good use case — ensures dialog is visible before typing.
+➡ Not test-specific — improves reliability.
+
+Final Verdict:
+---------------
+Use validations in POM wisely. Structural/UI readiness checks are good.
+Put business and outcome assertions in your spec/test files.
