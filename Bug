@@ -1,0 +1,16 @@
+🚨 Bug Report: MSC Field Accepts Invalid Value “NO”
+Hi Team,
+
+I noticed that the MSC field is accepting the value "NO" in the uploaded data, even though:
+	•	Valid values are restricted to: B, M, N, O, Y (from valid_csv)
+	•	Field length is defined as 1
+	•	Mandatory = ALL (i.e., cannot be blank or invalid)
+
+📌 Expected: An error should be shown for "NO" – it’s 2 characters and not in the allowed list
+❌ Actual: Value is accepted without validation error
+
+This appears to be a data validation bug and may impact downstream logic.
+
+Please review the validation rules for MSC under Product Type: GPI, Validation Category: CLINICAL.
+
+Let me know if logs/screenshots are needed. Thanks!
