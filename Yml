@@ -1,0 +1,23 @@
+- name: Automation Summary
+  id: automation-summary
+  shell: bash
+  if: always()
+  run: |
+    stats=$(jq -s 'reduce .[] as $item ({"passes":0,"failures":0,"pending":0,"skipped":0}; 
+      .passes += ($item.stats.passes // 0) |
+      .failures += ($item.stats.failures // 0) |
+      .pending += ($item.stats.pending // 0) |
+      .skipped += ($item.stats.skipped // 0))' cypress/reports/*.json)
+
+    passed=$(echo $stats | jq '.passes')
+    failed=$(echo $stats | jq '.failures')
+    pending=$(echo $stats | jq '.pending')
+    skipped=$(echo $stats | jq '.skipped')
+    total=$((passed + failed + pending + skipped))
+
+    echo "### ✅ Cypress Test Summary" >> $GITHUB_STEP_SUMMARY
+    echo "- Total Test Cases: **$total**" >> $GITHUB_STEP_SUMMARY
+    echo "- ✅ Passed: **$passed**" >> $GITHUB_STEP_SUMMARY
+    echo "- ❌ Failed: **$failed**" >> $GITHUB_STEP_SUMMARY
+    echo "- ⏸️ Pending: **$pending**" >> $GITHUB_STEP_SUMMARY
+    echo "- 🔕 Skipped: **$skipped**" >> $GITHUB_STEP_SUMMARY
