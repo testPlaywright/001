@@ -1,0 +1,50 @@
+
+- name: Automation Summary
+  id: automation-summary
+  shell: bash
+  if: always()
+  run: |
+    start_time=$(date +%s)
+
+    stats=$(jq -s 'reduce .[] as $item ({"passes":0,"failures":0,"pending":0,"skipped":0}; 
+      .passes += ($item.stats.passes // 0) |
+      .failures += ($item.stats.failures // 0) |
+      .pending += ($item.stats.pending // 0) |
+      .skipped += ($item.stats.skipped // 0))' cypress/reports/*.json)
+
+    passed=$(echo $stats | jq '.passes')
+    failed=$(echo $stats | jq '.failures')
+    pending=$(echo $stats | jq '.pending')
+    skipped=$(echo $stats | jq '.skipped')
+    total=$((passed + failed + pending + skipped))
+
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
+    mins=$((duration / 60))
+    secs=$((duration % 60))
+
+    status="✅ All Passed"
+    if [ "$failed" -gt 0 ]; then
+      status="❌ Failures Detected"
+    elif [ "$pending" -gt 0 ] || [ "$skipped" -gt 0 ]; then
+      status="⚠️ Partial Execution"
+    fi
+
+    echo "# 🧪✨ Cypress Automation Report ✨🧪" >> $GITHUB_STEP_SUMMARY
+    echo "" >> $GITHUB_STEP_SUMMARY
+    echo "### 🚦 Status: $status" >> $GITHUB_STEP_SUMMARY
+    echo "" >> $GITHUB_STEP_SUMMARY
+    echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+    echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+    echo "| 🧪 **Total Tests** | $total |" >> $GITHUB_STEP_SUMMARY
+    echo "| ✅ **Passed Tests** | $passed ✔️ |" >> $GITHUB_STEP_SUMMARY
+    echo "| ❌ **Failed Tests** | $failed ❌ |" >> $GITHUB_STEP_SUMMARY
+    echo "| ⏸️ **Pending Tests** | $pending ⚠️ |" >> $GITHUB_STEP_SUMMARY
+    echo "| 🔕 **Skipped Tests** | $skipped ⚠️ |" >> $GITHUB_STEP_SUMMARY
+    echo "| 🕒 **Duration** | ${mins}m ${secs}s |" >> $GITHUB_STEP_SUMMARY
+    echo "" >> $GITHUB_STEP_SUMMARY
+    echo "📄 **HTML Report:** [View Report](https://orx-aim-ar.s3docs.optum.com/index.html)" >> $GITHUB_STEP_SUMMARY
+    echo "📸 **Artifacts:** Cypress screenshots/videos attached" >> $GITHUB_STEP_SUMMARY
+    echo "🔢 Commit: \`$(git rev-parse --short HEAD)\`" >> $GITHUB_STEP_SUMMARY
+    echo "🧑‍💻 Author: $(git log -1 --pretty=format:'%an')" >> $GITHUB_STEP_SUMMARY
+    echo "📆 Date: $(git log -1 --date=short --pretty=format:'%cd')" >> $GITHUB_STEP_SUMMARY
