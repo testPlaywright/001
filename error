@@ -1,0 +1,25 @@
+cypress
+orx-cat-automation (main)
+v14.4.1
+
+Docs
+
+Profile and logout
+
+
+Cypress configuration error
+
+Try again
+Error
+Your configFile is invalid: C:\Users\vkuma853\orx-cat-automation\cypress.config.js
+
+It threw an error when required, check the stack trace below:
+
+Stack trace
+Error [ERR_REQUIRE_ESM]: require() of ES Module C:\Users\vkuma853\orx-cat-automation\node_modules\brace-expansion\index.js from C:\Users\vkuma853\orx-cat-automation\node_modules\minimatch\dist\commonjs\index.js not supported.
+Instead change the require of C:\Users\vkuma853\orx-cat-automation\node_modules\brace-expansion\index.js in C:\Users\vkuma853\orx-cat-automation\node_modules\minimatch\dist\commonjs\index.js to a dynamic import() which is available in all CommonJS modules.
+    at TracingChannel.traceSync (node:diagnostics_channel:315:14)
+    at Object. (C:\Users\vkuma853\orx-cat-automation\node_modules\minimatch\dist\commonjs\index.js:7:43)
+    at TracingChannel.traceSync (node:diagnostics_channel:315:14)
+    at Object. (C:\Users\vkuma853\orx-cat-automation\node_modules\readdir-glob\index.js:5:23)
+    at TracingChannel.traceSync (node:diagnostics_channel:315:14)
