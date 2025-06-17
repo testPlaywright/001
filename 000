@@ -1,0 +1,38 @@
+name: Cypress Tests on Dev and Test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ENV_NAME: [dev, test]
+        include:
+          - ENV_NAME: dev
+            BASE_URL: https://dev.example.com
+            USERNAME: devuser
+            PASSWORD: devpass
+          - ENV_NAME: test
+            BASE_URL: https://test.example.com
+            USERNAME: testuser
+            PASSWORD: testpass
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run Cypress on ${{ matrix.ENV_NAME }}
+        run: |
+          npx cypress run --env BASE_URL=${{ matrix.BASE_URL }},USERNAME=${{ matrix.USERNAME }},PASSWORD=${{ matrix.PASSWORD }}
