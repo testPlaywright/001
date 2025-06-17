@@ -1,4 +1,3 @@
-
 name: Cypress E2E Test Run
 
 on:
@@ -14,13 +13,13 @@ jobs:
   test:
     runs-on: uhg-runner
 
-    environment:
-      name: ${{ github.ref_name }}
+    strategy:
+      matrix:
+        ENV_NAME: [dev, test]
 
     steps:
       - name: Cleanup
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -35,10 +34,8 @@ jobs:
         run: |
           wget https://repo1.uhc.com/artifactory/security-ubuntu-cache/ubuntu/pool/main/x/xorg-server/xserver-common_21.1.4-2ubuntu1.7~22.04.9_all.deb -O /tmp/xserver-common.deb
           wget https://repo1.uhc.com/artifactory/security-ubuntu-cache/ubuntu/pool/universe/x/xorg-server/xvfb_21.1.3-2ubuntu2.9_amd64.deb -O /tmp/xvfb.deb
-
           sudo apt-get update
           sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libnss3 libxss1 libasound2t64 libxtst6 xauth /tmp/xserver-common.deb /tmp/xvfb.deb
-
           rm /tmp/xserver-common.deb /tmp/xvfb.deb
 
       - name: npm Install
@@ -46,17 +43,30 @@ jobs:
           npm config set registry https://repo1.uhc.com/artifactory/api/npm/npm-virtual/
           npm install
 
-      - name: Run Cypress Tests
-        run: npx cypress run
+      - name: Set Environment Variables for ${{ matrix.ENV_NAME }}
+        run: |
+          if [ "${{ matrix.ENV_NAME }}" = "dev" ]; then
+            echo "BASE_URL=${{ secrets.DEV_BASE_URL }}" >> $GITHUB_ENV
+            echo "USERNAME=${{ secrets.DEV_USERNAME }}" >> $GITHUB_ENV
+            echo "PASSWORD=${{ secrets.DEV_PASSWORD }}" >> $GITHUB_ENV
+          elif [ "${{ matrix.ENV_NAME }}" = "test" ]; then
+            echo "BASE_URL=${{ secrets.TEST_BASE_URL }}" >> $GITHUB_ENV
+            echo "USERNAME=${{ secrets.TEST_USERNAME }}" >> $GITHUB_ENV
+            echo "PASSWORD=${{ secrets.TEST_PASSWORD }}" >> $GITHUB_ENV
+          fi
+
+      - name: Run Cypress Tests on ${{ matrix.ENV_NAME }}
+        run: |
+          npx cypress run --env BASE_URL=$BASE_URL,USERNAME=$USERNAME,PASSWORD=$PASSWORD
 
       - name: Final Summary
-        run: echo "✅ Cypress Tests Completed Successfully."
+        run: echo "✅ Cypress Tests Completed Successfully on ${{ matrix.ENV_NAME }}"
 
       - name: Upload Cypress Artifacts (Screenshots, Videos, Reports)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cypress-artifacts
+          name: cypress-artifacts-${{ matrix.ENV_NAME }}
           path: |
             cypress/reports
             cypress/screenshots
@@ -79,8 +89,7 @@ jobs:
           skipped=$(echo $stats | jq '.skipped')
           total=$((passed + failed + pending + skipped))
 
-
-          echo "### ✅ CAT Automation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ CAT Automation Summary - ${{ matrix.ENV_NAME }}" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| 🧪 Total Test Cases | $total |" >> $GITHUB_STEP_SUMMARY
@@ -100,4 +109,4 @@ jobs:
 
       - name: Print Report URL
         run: |
-          echo "Report URL: https://s3api-dmz.optum.com/orx-cat-ar/index.html"
+          echo "Report URL for ${{ matrix.ENV_NAME }}: https://s3api-dmz.optum.com/orx-cat-ar/index.html"
