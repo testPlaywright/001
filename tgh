@@ -1,0 +1,52 @@
+Cypress.Commands.add("ssoLogin", () => {
+  const basicUser = Cypress.env("basic_username");
+  const basicPass = Cypress.env("basic_password");
+  const msid = Cypress.env("msid");
+  const msidPass = Cypress.env("msid_password");
+
+  const entryUrl = "https://rxc-cat-test.optum.com/login";
+
+  // STEP 1: Visit with basic auth to trigger redirect
+  cy.visit(entryUrl, {
+    auth: {
+      username: basicUser,
+      password: basicPass,
+    },
+    failOnStatusCode: false
+  });
+
+  // STEP 2: Log all redirects and wait for final redirect URL
+  cy.window().then((win) => {
+    const finalUrl = win.location.href;
+    cy.log("🌐 Final Redirected URL: " + finalUrl);
+
+    // STEP 3: Revisit with basic auth again (dynamic token URL)
+    cy.visit(finalUrl, {
+      auth: {
+        username: basicUser,
+        password: basicPass,
+      },
+      failOnStatusCode: false
+    });
+
+    // Optional: Log cookies
+    cy.getCookies().then((cookies) => {
+      cy.log("🍪 Cookies after auth:", JSON.stringify(cookies));
+    });
+
+    // STEP 4: Check page content
+    cy.document().then((doc) => {
+      const bodyText = doc.body.innerText;
+      cy.log("📄 Page body: " + bodyText.substring(0, 300));
+
+      if (bodyText.includes("logged out") || bodyText.toLowerCase().includes("sign in")) {
+        throw new Error("❌ Login failed or redirected to logout screen.");
+      }
+    });
+
+    // STEP 5: Try filling MSID login form
+    cy.get('input[name="pf.username"]', { timeout: 15000 }).type(msid);
+    cy.get('input[name="pf.pass"]').type(msidPass, { log: false });
+    cy.get('input[type="submit"]').click();
+  });
+});
