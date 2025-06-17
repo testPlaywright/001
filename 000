@@ -44,16 +44,15 @@ jobs:
           npm install
 
       - name: Set Environment Variables for ${{ matrix.ENV_NAME }}
-        run: |
-          if [ "${{ matrix.ENV_NAME }}" = "dev" ]; then
-            echo "BASE_URL=${{ secrets.DEV_BASE_URL }}" >> $GITHUB_ENV
-            echo "USERNAME=${{ secrets.DEV_USERNAME }}" >> $GITHUB_ENV
-            echo "PASSWORD=${{ secrets.DEV_PASSWORD }}" >> $GITHUB_ENV
-          elif [ "${{ matrix.ENV_NAME }}" = "test" ]; then
-            echo "BASE_URL=${{ secrets.TEST_BASE_URL }}" >> $GITHUB_ENV
-            echo "USERNAME=${{ secrets.TEST_USERNAME }}" >> $GITHUB_ENV
-            echo "PASSWORD=${{ secrets.TEST_PASSWORD }}" >> $GITHUB_ENV
-          fi
+  run: |
+    if [ "${{ matrix.ENV_NAME }}" = "dev" ]; then
+      echo "BASE_URL=${{ secrets.DEV_BASE_URL }}" >> $GITHUB_ENV
+    elif [ "${{ matrix.ENV_NAME }}" = "test" ]; then
+      echo "BASE_URL=${{ secrets.TEST_BASE_URL }}" >> $GITHUB_ENV
+    fi
+    echo "USERNAME=${{ secrets.SHARED_USERNAME }}" >> $GITHUB_ENV
+    echo "PASSWORD=${{ secrets.SHARED_PASSWORD }}" >> $GITHUB_ENV
+
 
       - name: Run Cypress Tests on ${{ matrix.ENV_NAME }}
         run: |
