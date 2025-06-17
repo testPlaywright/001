@@ -1,0 +1,117 @@
+// ***********************************************
+// Enhanced Cypress Custom Commands for SSO Login
+// ***********************************************
+
+import { BASE_URL, CANCEL, CLICKED } from "./constants";
+
+Cypress.Commands.add("ssoLogin", (msid, password) => {
+  cy.request({
+    method: "GET",
+    url: BASE_URL,
+    failOnStatusCode: false,
+  }).then((response) => {
+    const initialLocationUrl = getLocationUrl(response);
+    const authVerification = getAuthVerification(response);
+
+    if (!initialLocationUrl || !authVerification) {
+      throw new Error("Missing location or auth_verification from initial response");
+    }
+
+    Cypress.env("auth_verification", authVerification);
+
+    cy.request({
+      method: "GET",
+      url: initialLocationUrl,
+    }).then((response) => {
+      const postLocationUrl = getRedirectLocation(response);
+
+      if (!postLocationUrl) {
+        throw new Error("Missing location URL for login POST");
+      }
+
+      cy.request({
+        method: "POST",
+        url: postLocationUrl,
+        form: true,
+        body: {
+          "pf.username": Cypress.env("USERNAME"),
+          "pf.pass": Cypress.env("PASSWORD"),
+          "pf.ok": CLICKED,
+          "pf.cancel": CANCEL,
+        },
+      }).then((response) => {
+        const finalRedirectUrl = getRedirectUrl(response);
+
+        if (!finalRedirectUrl) {
+          throw new Error("Missing final redirect URL");
+        }
+
+        cy.request({
+          method: "GET",
+          url: finalRedirectUrl,
+          headers: {
+            Cookie: "auth_verification=" + Cypress.env("auth_verification"),
+          },
+        }).then((response) => {
+          const appSession = getAppSession(response);
+
+          if (!appSession) {
+            throw new Error("App session not found");
+          }
+
+          Cypress.env("appSession", appSession);
+
+          if (Cypress.env("debug")) {
+            cy.log("App Session: ", appSession);
+            cy.log("Response Headers: ", response.headers);
+          }
+        });
+      });
+    });
+  });
+});
+
+// ----------------------
+// Helper Functions
+// ----------------------
+const getLocationUrl = (response) => {
+  const responseHeaders = response.allRequestResponses?.[0]?.["Response Headers"];
+  return responseHeaders?.["location"];
+};
+
+const getAuthVerification = (response) => {
+  const cookieHeader = response.headers["set-cookie"]?.[0];
+  return extractValueFromCookie(cookieHeader, "auth_verification");
+};
+
+const getRedirectLocation = (response) => {
+  const responseHeaders = response.allRequestResponses?.[0]?.["Response Headers"];
+  return responseHeaders?.["location"];
+};
+
+const getRedirectUrl = (response) => {
+  const redirectRegex = /^\S+ (.+)$/;
+  const match = redirectRegex.exec(response.redirects?.[0]);
+  return match ? match[1] : null;
+};
+
+const getAppSession = (response) => {
+  return response.headers["set-cookie"];
+};
+
+const extractValueFromCookie = (cookie, key) => {
+  const [_, value] = cookie?.split(";").find((part) => part.trim().startsWith(`${key}=`))?.split("=") || [];
+  return value;
+};
+
+// ----------------------
+// Cypress Log Overwrite
+// ----------------------
+Cypress.Commands.overwrite("log", function (log, ...args) {
+  if (Cypress.browser?.isHeadless) {
+    return cy.task("log", args, { log: false }).then(() => log(...args));
+  } else {
+    console.log(...args);
+    return log(...args);
+  }
+});
