@@ -1,40 +1,24 @@
-class PageNavigator {
-  /**
-   * Navigates with retry on 429, using either a selector or direct URL.
-   * 
-   * @param {string} urlPath - The relative path (e.g. /notes)
-   * @param {Object} options - Options object
-   * @param {string} [options.selector] - CSS selector to click if available
-   * @param {number} [options.retries=2] - Max retry count on 429
-   * @param {number} [options.waitMs=3000] - Wait time between retries
-   */
-  static visitWithRetry(urlPath, { selector = null, retries = 2, waitMs = 3000 } = {}) {
-    let attempt = 0;
+import { Given, Then } from 'cypress-cucumber-preprocessor/steps';
+import PageNavigator from '../../utils/PageNavigator';
+import { BASE_URL } from '../../support/constants';
+import catHomePage from '../../pages/CatHomePage';
 
-    const tryVisit = () => {
-      cy.request({
-        url: urlPath,
-        failOnStatusCode: false,
-      }).then((res) => {
-        if (res.status === 429 && attempt < retries) {
-          cy.log(`🔁 Got 429 - retrying in ${waitMs}ms (attempt ${attempt + 1})`);
-          attempt++;
-          cy.wait(waitMs).then(tryVisit);
-        } else if (res.status >= 200 && res.status < 300) {
-          cy.log(`✅ Server healthy, navigating to ${urlPath}`);
-          if (selector) {
-            cy.get(selector).click();
-          } else {
-            cy.visit(urlPath);
-          }
-        } else {
-          throw new Error(`❌ visit failed with status ${res.status}`);
-        }
-      });
-    };
+Given("I am logged into the CAT Application", () => {
+  cy.ssoLogin();
+});
 
-    tryVisit();
-  }
-}
+const pageMap = {
+  "BOM Notes": { url: "/notes", selector: '[href="/notes"]' },
+  "Tickets": { url: "/tickets", selector: '[href="/tickets"]' },
+  "Filters": { url: "/filters", selector: '[href="/filters"]' },
+};
 
-export default PageNavigator;
+Given("I visit the {string} page", (pageName) => {
+  const page = pageMap[pageName];
+  if (!page) throw new Error(`No mapping found for page: ${pageName}`);
+  PageNavigator.visitWithRetry(page.url, { selector: page.selector });
+});
+
+Then("I should see the CAT Home Page", () => {
+  catHomePage.assertLoginSuccess();
+});
