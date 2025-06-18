@@ -1,0 +1,29 @@
+class BomNotes {
+  getBomNotesPage() {
+    return cy.get('[href="/notes"]'); // Don't click yet
+  }
+
+  visitNotesWithRetry(retries = 2, waitMs = 3000) {
+    let attempt = 0;
+
+    const tryVisit = () => {
+      cy.request({
+        url: '/notes',
+        failOnStatusCode: false,
+      }).then((res) => {
+        if (res.status === 429 && attempt < retries) {
+          cy.log(`⚠️ Got 429 - retrying in ${waitMs}ms (attempt ${attempt + 1})`);
+          attempt++;
+          cy.wait(waitMs).then(tryVisit);
+        } else if (res.status >= 200 && res.status < 300) {
+          cy.log('✅ Server healthy, visiting...');
+          this.getBomNotesPage().click(); // Now do the click
+        } else {
+          throw new Error(`❌ visit failed with status ${res.status}`);
+        }
+      });
+    };
+
+    tryVisit();
+  }
+}
