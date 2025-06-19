@@ -1,0 +1,6 @@
+cy.get('body').then($body => {
+  if ($body.find('.MuiDialog-container:visible, .modal:visible').length > 0) {
+    cy.get('button[aria-label="Close"], .close')
+      .click({ multiple: true, force: true });
+  }
+});
