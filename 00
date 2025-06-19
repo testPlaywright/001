@@ -1,5 +1,32 @@
-Cypress.Commands.add('ssoLoginOnce', () => {
-  cy.session('cat-sso-session', () => {
-    cy.ssoLogin();
-  });
-});
+static visitWithRetry(urlPath, { selector = null } = {}, retries = 5, waitMs = 3000) {
+  let attempt = 0;
+
+  const tryVisit = () => {
+    cy.request({
+      url: urlPath,
+      failOnStatusCode: false
+    }).then((res) => {
+      if (res.status === 429 && attempt < retries) {
+        cy.log(`🔁 Got 429 - retrying in ${waitMs}ms (attempt ${attempt + 1}/${retries})`);
+        attempt++;
+
+        // Optional exponential backoff
+        const backoff = waitMs * Math.pow(2, attempt - 1);
+        cy.wait(backoff).then(tryVisit);
+
+      } else if (res.status >= 200 && res.status < 300) {
+        cy.log(`✅ Server healthy, navigating to ${urlPath}`);
+        if (selector) {
+          cy.get(selector).click({ force: true });
+        } else {
+          cy.visit(urlPath);
+        }
+
+      } else {
+        throw new Error(`❌ visit failed with status ${res.status}`);
+      }
+    });
+  };
+
+  tryVisit();
+}
