@@ -1,43 +1,5 @@
-import { BASE_URL, CANCEL, CLICKED, PASSWORD, USERNAME } from "./constants";
-
-Cypress.Commands.add("ssoLogin", () => {
-  return cy.request({
-    method: "GET",
-    url: BASE_URL,
-    failOnStatusCode: false,
-  }).then((response) => {
-    const locationUrl = getLocationUrl(response);
-    const authVerification = getAuthVerification(response);
-    Cypress.env("auth_verification", authVerification);
-
-    return cy.request({ method: "GET", url: locationUrl }).then((response) => {
-      const location = getLoc(response);
-
-      return cy.request({
-        method: "POST",
-        url: location,
-        form: true,
-        body: {
-          "pf.username": USERNAME,
-          "pf.pass": PASSWORD,
-          "pf.ok": CLICKED,
-          "pf.cancel": CANCEL,
-        },
-      }).then((response) => {
-        const redirectUrl = getRedirectUrl(response);
-
-        return cy.request({
-          method: "GET",
-          url: redirectUrl,
-          headers: {
-            Cookie: "auth_verification=" + Cypress.env("auth_verification"),
-          },
-        }).then((response) => {
-          const appSession = getAppSession(response);
-          Cypress.env("appSession", appSession);
-          return cy.wrap(null); // ✅ Final return to make it chainable
-        });
-      });
-    });
+Cypress.Commands.add('ssoLoginOnce', () => {
+  cy.session('cat-sso-session', () => {
+    cy.ssoLogin();
   });
 });
