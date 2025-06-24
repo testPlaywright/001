@@ -1,6 +1,6 @@
 - name: Print Report URL
+  if: always()
   run: |
-    echo "### 🌐 Report Deployed" >> $GITHUB_STEP_SUMMARY
-    echo "📅 Date: ${{ env.date }}" >> $GITHUB_STEP_SUMMARY
-    echo "🌍 Env: ${{ matrix.ENV_NAME }}" >> $GITHUB_STEP_SUMMARY
-    echo "🔗 [Click to View Report](https://orx-cat-ar.s3docs.optum.com/cypress/reports/${{ env.date }}/index.html)" >> $GITHUB_STEP_SUMMARY
+    echo "## ✅ Report Deployment Summary" >> $GITHUB_STEP_SUMMARY
+    echo "📅 Date: \`${{ steps.date.outputs.date }}\`" >> $GITHUB_STEP_SUMMARY
+    echo "[🔗 Click to view report](https://orx-cat-ar.s3docs.optum.com/cypress/reports/${{ steps.date.outputs.date }}/index.html)" >> $GITHUB_STEP_SUMMARY
